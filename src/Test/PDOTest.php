@@ -7,6 +7,7 @@ use Alura\Pdo\Model\Entity\StudentEntity;
 use Alura\Pdo\Model\Repository\StudentRepository;
 use DateTimeImmutable;
 use PDO;
+use PDOException;
 
 class PDOTest
 {
@@ -81,16 +82,20 @@ class PDOTest
 
         $connection->beginTransaction();
 
-        $studentA = new StudentEntity(null, "Alice Maras", new DateTimeImmutable("2008-11-10"));
-        $studentB = new StudentEntity(null, "Bernardo Heik", new DateTimeImmutable("1944-06-04"));
-        $studentC = new StudentEntity(null, "Carlos Saraiga", new DateTimeImmutable("1999-03-12"));
+        try {
+            $studentA = new StudentEntity(null, "Alice Maras", new DateTimeImmutable("2008-11-10"));
+            $studentB = new StudentEntity(null, "Bernardo Heik", new DateTimeImmutable("1944-06-04"));
+            $studentC = new StudentEntity(null, "Carlos Saraiga", new DateTimeImmutable("1999-03-12"));
 
-        $studentRepo->save($studentA);
-        $studentRepo->save($studentB);
-        $studentRepo->save($studentC);
+            $studentRepo->save($studentA);
+            $studentRepo->save($studentB);
+            $studentRepo->save($studentC);
 
-        $connection->rollBack();
-        // $connection->commit();
-        
+            $connection->commit();
+        } catch (PDOException $exception) {
+            var_dump($exception->getMessage());
+            
+            $connection->rollBack();
+        }        
     }
 }
