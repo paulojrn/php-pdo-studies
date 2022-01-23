@@ -6,14 +6,40 @@ use Alura\Pdo\Infrastructure\Persistence\ConnectionCreator;
 use Alura\Pdo\Model\Entity\StudentEntity;
 use Alura\Pdo\Model\Repository\StudentRepository;
 use DateTimeImmutable;
-use PDO;
 use PDOException;
 
 class PDOTest
 {
-    public static function testGetValues(bool $hydrate): array
+    public static function testCreateTables(): void
     {
-        $studentRepository = new StudentRepository(StudentEntity::class);
+        $pdo = ConnectionCreator::sqliteConnectionCreate();
+
+        echo "Criando..." . PHP_EOL;
+
+        // $pdo->exec("CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, birth_date TEXT);");
+
+        $createTableSql = '
+            CREATE TABLE IF NOT EXISTS students (
+                id INTEGER PRIMARY KEY,
+                name TEXT,
+                birth_date TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS phones (
+                id INTEGER PRIMARY KEY,
+                area_code TEXT,
+                number TEXT,
+                student_id INTEGER,
+                FOREIGN KEY(student_id) REFERENCES students(id)
+            );
+        ';
+
+        $pdo->exec($createTableSql);
+    }
+
+    public static function testGetValues(string $repoName, bool $hydrate): array
+    {
+        $studentRepository = new $repoName();
         $result = $studentRepository->setHydrate($hydrate)->all();
 
         var_dump("=== SEARCH ALL ===");
@@ -24,7 +50,7 @@ class PDOTest
 
     public static function testGetValue(bool $hydrate): array
     {
-        $studentRepository = new StudentRepository(StudentEntity::class);
+        $studentRepository = new StudentRepository();
         $result = $studentRepository->setHydrate($hydrate)->one(6);
 
         
@@ -36,7 +62,7 @@ class PDOTest
 
     public static function testGetValuesByDate(bool $hydrate): void
     {
-        $studentRepository = new StudentRepository(StudentEntity::class);
+        $studentRepository = new StudentRepository();
         
         $result = $studentRepository->setHydrate($hydrate)->getStudentsBirthAt(new DateTimeImmutable("1986-07-01"));
 
@@ -47,7 +73,7 @@ class PDOTest
     public static function testSaveObj(): void
     {
         $student = new StudentEntity(null, "Amarildo Jonas", new DateTimeImmutable("1894-01-30"));
-        $studentRepository = new StudentRepository($student::class);
+        $studentRepository = new StudentRepository();
 
         $result = $studentRepository->save($student);
 
@@ -59,7 +85,7 @@ class PDOTest
         $student = current(self::testGetValue(true));
         $student->birthDate(new DateTimeImmutable("1986-07-01"));
 
-        $studentRepository = new StudentRepository($student::class);
+        $studentRepository = new StudentRepository();
 
         $result = $studentRepository->save($student);
 
@@ -68,7 +94,7 @@ class PDOTest
 
     public static function testRemoveObj(): void
     {
-        $studentRepository = new StudentRepository(StudentEntity::class);
+        $studentRepository = new StudentRepository();
         
         $result = $studentRepository->delete(9);
 
@@ -78,7 +104,7 @@ class PDOTest
     public static function testAddStudentsToClass(): void
     {
         $connection = ConnectionCreator::sqliteConnectionCreate();
-        $studentRepo = new StudentRepository(StudentEntity::class, $connection);
+        $studentRepo = new StudentRepository($connection);
 
         $connection->beginTransaction();
 
@@ -94,8 +120,25 @@ class PDOTest
             $connection->commit();
         } catch (PDOException $exception) {
             var_dump($exception->getMessage());
-            
+
             $connection->rollBack();
         }        
+    }
+
+    public static function testSavePhone(): void
+    {
+        $pdo = ConnectionCreator::sqliteConnectionCreate();
+        $pdo->exec("INSERT INTO phones (area_code, number, student_id) VALUES ('24', '999999999', 4),('21', '222222222', 4);");
+
+    }
+
+    public static function testGetStudentsWithPhones()
+    {
+        $studentRepository = new StudentRepository();
+        $result = $studentRepository->getStudentsWithPhones();
+        $studentId = 4;
+
+        var_dump($result);
+        var_dump($result[$studentId]->phone()[0]->formattedPhone());
     }
 }

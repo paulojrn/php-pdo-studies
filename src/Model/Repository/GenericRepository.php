@@ -22,7 +22,7 @@ abstract class GenericRepository
      * @param string $entityName;
      * @param PDO $pdo;
      */
-    abstract public function __construct(string $entityName, PDO $pdo = null);
+    abstract public function __construct(PDO $pdo = null);
 
     /**
      * @param $dataList
@@ -46,6 +46,21 @@ abstract class GenericRepository
      * @param int $id
      * @return array
      */
+    public function one(int $id, string $idName = "id"): array
+    {
+        $results = $this->oneNonHidrate($id, $idName);
+
+        if ((count($results) > 0) && $this->hidrate) {
+            $results = $this->hydrate([$results]);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param int $id
+     * @return array
+     */
     protected function oneNonHidrate(int $id, string $idName): array
     {
         $results = [];
@@ -59,6 +74,20 @@ abstract class GenericRepository
             if (is_array($resultAux)) {
                 $results = $resultAux;
             }
+        }
+
+        return $results;
+    }
+
+    /**
+     * @return array
+     */
+    public function all(): array
+    {   
+        $results = $this->allNonHidrate();
+
+        if ((count($results) > 0) && $this->hidrate) {
+            $results = $this->hydrate($results);
         }
 
         return $results;
