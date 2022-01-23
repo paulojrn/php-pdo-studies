@@ -12,5 +12,6 @@ PDOTest::testGetValues(false);
 // PDOTest::testRemoveObj();
 // PDOTest::testGetValue(true);
 // PDOTest::testGetValuesByDate(false);
+// PDOTest::testAddStudentsToClass();
 
 PDOTest::testGetValues(false);

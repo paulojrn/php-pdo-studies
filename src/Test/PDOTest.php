@@ -2,6 +2,7 @@
 
 namespace Alura\Pdo\Test;
 
+use Alura\Pdo\Infrastructure\Persistence\ConnectionCreator;
 use Alura\Pdo\Model\Entity\StudentEntity;
 use Alura\Pdo\Model\Repository\StudentRepository;
 use DateTimeImmutable;
@@ -68,8 +69,28 @@ class PDOTest
     {
         $studentRepository = new StudentRepository(StudentEntity::class);
         
-        $result = $studentRepository->delete(8);
+        $result = $studentRepository->delete(9);
 
         var_dump("=== DELETE: $result ===");
+    }
+
+    public static function testAddStudentsToClass(): void
+    {
+        $connection = ConnectionCreator::sqliteConnectionCreate();
+        $studentRepo = new StudentRepository(StudentEntity::class, $connection);
+
+        $connection->beginTransaction();
+
+        $studentA = new StudentEntity(null, "Alice Maras", new DateTimeImmutable("2008-11-10"));
+        $studentB = new StudentEntity(null, "Bernardo Heik", new DateTimeImmutable("1944-06-04"));
+        $studentC = new StudentEntity(null, "Carlos Saraiga", new DateTimeImmutable("1999-03-12"));
+
+        $studentRepo->save($studentA);
+        $studentRepo->save($studentB);
+        $studentRepo->save($studentC);
+
+        $connection->rollBack();
+        // $connection->commit();
+        
     }
 }
